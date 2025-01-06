@@ -9,81 +9,96 @@ Below is an example demonstrating how to use `BufReader` and `BufWriter` to read
 
 ### Writing Data with `BufWriter`:
 ```c
+#include <stdbool.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include "buf_reader.h"
 
-int on_write_fail(const char* err) {
-    fprintf(stderr, "Failed to write data!\nBufWriter error: %s\n", err);
+#include <nanobuf.h>
+#include <buf_writer.h>
+
+void on_write_fail(const char* err)
+{
+	fprintf(stderr, "Failed to write data!\nBufWriter error: %s\n", err);
+	exit(EXIT_FAILURE);
 }
 
-int main() {
-    // Create a BufWriter with an initial size of 1024 bytes
-    BufWriterCreateOptions options = {
-        .fail_cb = on_bv,   // A fail callback function (set to NULL for default)
-        .intial_size = 1024   // Initial buffer size (bytes)
-    };
-    BufWriter* writer = bw_create(options);
+int main(int argc, char** argv)
+{
+	// Create a BufWriter with an initial size of 1024 bytes
+	BufWriterCreateOptions options = {
+		.fail_cb = &on_write_fail,   // A fail callback function (set to NULL for default)
+		.intial_size = 1024   // Initial buffer size (bytes)
+	};
+	BufWriter* writer = bw_create(options);
 
-    // Write various types of data to the buffer
-    uint8_t byte_value = 42;
-    uint16_t u16_value = 12345;
-    uint32_t u32_value = 987654;
-    const char* str_value = "Hello, world!";
+	// Write various types of data to the buffer
+	uint8_t byte_value = 42;
+	uint16_t u16_value = 12345;
+	uint32_t u32_value = 987654;
+	const char* str_value = "Hello, world!";
 
-    bw_u8(writer, byte_value);
-    bw_u16(writer, u16_value);
-    bw_u32(writer, u32_value);
-    bw_str(writer, str_value); // Write the string
+	bw_u8(writer, byte_value);
+	bw_u16(writer, u16_value);
+	bw_u32(writer, u32_value);
+	bw_str(writer, str_value); // Write the string
 
-    // Print the size of the written data
-    printf("Buffer size: %zu bytes\n", bw_size(writer));
+	// Print the size of the written data
+	printf("Buffer size: %zu bytes\n", bw_size(writer));
+	nb_hexdump(writer->start, bw_size(writer));
 
-    // Optional: You can destroy the writer when done
-    bw_destroy(writer);
-
-    return 0;
+	// Optional: You can destroy the writer when done
+	bw_destroy(writer, true);
+	return 0;
 }
 ```
 
 ### Reading Data with `BufReader`:
 ```c
-#include "nanobuf.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-int main() {
-    // Data to be read by BufReader
-    uint8_t buffer[] = {
-        42,             // byte_value
-        0x30, 0x39,        // u16_value (12345)
-        0x0f, 0x3d, 0x15, 0x6e, // u32_value (987654)
-        'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 // str_value
-    };
+#include <buf_reader.h>
 
-    // Create a BufReader from the buffer
-    BufReaderCreateOptions options = BR_OPTIONS_FROM_
-    BufReader* reader = br_create(options);
+void on_read_fail(const char* err)
+{
+	fprintf(stderr, "Failed to read data!\nBufReader error: %s\n", err);
+	exit(EXIT_FAILURE);
+}
 
-    // Read data from the buffer
-    uint8_t byte_value = br_u8(reader);
-    uint16_t u16_value = br_u16(reader);
-    uint32_t u32_value = br_u32(reader);
-    BufReaderSlice str_slice = br_str(reader);
+int main(int argc, char** argv)
+{
+	// Data to be read by BufReader
+	uint8_t buffer[] = {
+		42,             // byte_value
+		0x30, 0x39,        // u16_value (12345)
+		0x0f, 0x3d, 0x15, 0x6e, // u32_value (987654)
+		'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 // str_value
+	};
 
-    // Print the read values
-    printf("Read byte: %u\n", byte_value);
-    printf("Read uint16_t: %u\n", u16_value);
-    printf("Read uint32_t: %u\n", u32_value);
-    printf("Read string: %.*s\n", (int)str_slice.size, (char*)str_slice.data);
+	// Create a BufReader from the buffer
+	BufReaderCreateOptions options = BR_OPTIONS_FROM_ARRAY(buffer, NULL);
+	BufReader* reader = br_create(options);
 
-    // Optional: You can check if the buffer was overrun
-    if (br_overran(reader)) {
-        printf("Buffer overrun detected!\n");
-    }
+	// Read data from the buffer
+	uint8_t byte_value = br_u8(reader);
+	uint16_t u16_value = br_u16(reader);
+	uint32_t u32_value = br_u32(reader);
+	BufReaderSlice str_slice = br_str(reader);
 
-    // Optional: Destroy the reader when done
-    free(reader); // Note: BufReader will be dynamically allocated in br_create
+	// Print the read values
+	printf("Read byte: %u\n", byte_value);
+	printf("Read uint16_t: %u\n", u16_value);
+	printf("Read uint32_t: %u\n", u32_value);
+	printf("Read string: %.*s\n", (int)str_slice.size, (char*)str_slice.data);
 
-    return 0;
+	// Optional: You can check if the buffer was overrun
+	if (br_overran(reader)) {
+		printf("Buffer overrun detected!\n");
+	}
+
+	// Optional: Destroy the reader when done
+	br_destroy(reader);
+	return 0;
 }
 ```
 
