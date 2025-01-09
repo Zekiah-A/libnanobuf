@@ -24,6 +24,9 @@ typedef struct bw_create_options {
 	size_t intial_size;
 } BufWriterCreateOptions;
 
+#define bw_create_default() \
+	bw_create((BufWriterCreateOptions) { .fail_cb = NULL, .intial_size = 0 })
+
 /// Buf reader
 
 typedef void (*BufReaderFailCallback)(const char*);
