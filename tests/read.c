@@ -18,9 +18,7 @@ int main(int argc, char** argv)
 		'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 // str_value (Hello world!)
 	};
 
-	BufReaderCreateOptions options = BR_OPTIONS_FROM_ARRAY(buffer, NULL);
-	BufReader* reader = br_create(options);
-
+	BufReader* reader = br_from_array(buffer, &on_read_fail);
 	uint8_t byte_value = br_u8(reader);
 	uint16_t u16_value = br_u16(reader);
 	uint32_t u32_value = br_u32(reader);
