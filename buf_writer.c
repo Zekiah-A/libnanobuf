@@ -174,5 +174,5 @@ void bw_arr(BufWriter* buf, const uint8_t* arr, size_t n)
 void bw_str(BufWriter* buf, const char* str)
 {
 	size_t length = strlen(str);
-	bw_arr(buf, (const uint8_t*) str, length + 1);
+	bw_arr(buf, (const uint8_t*) str, length);
 }
