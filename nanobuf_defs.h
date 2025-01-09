@@ -55,17 +55,17 @@ typedef struct br_create_options {
 	};
 } BufReaderCreateOptions;
 
-#define BR_OPTIONS_FROM_WRITER(writer, fail_callback) \
-	(BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUF_WRITER, .buf_writer = (writer) }
+#define br_from_writer(writer, fail_callback) \
+	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUF_WRITER, .buf_writer = (writer) })
 
-#define BR_OPTIONS_FROM_SLICE(slice, fail_callback) \
-	(BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_SLICE, .slice = (slice) }
+#define br_from_slice(slice, fail_callback) \
+	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_SLICE, .slice = (slice) })
 
-#define BR_OPTIONS_FROM_BUFFER(buffer, fail_callback) \
-	(BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = (buffer) }
+#define br_from_buffer(buffer, fail_callback) \
+	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = (buffer) })
 
-#define BR_OPTIONS_FROM_DATA(ptr, size, fail_callback) \
-	(BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = &(NanoBufBuffer){ .start = (uint8_t*)(ptr), .end = (uint8_t*)(ptr) + (size) } }
+#define br_from_ptr(ptr, size, fail_callback) \
+	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = &(NanoBufBuffer){ .start = (uint8_t*)(ptr), .end = (uint8_t*)(ptr) + (size) } })
 
-#define BR_OPTIONS_FROM_ARRAY(array, fail_callback) \
-	(BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = &(NanoBufBuffer){ .start = (uint8_t*)(array), .end = (uint8_t*)(array) + sizeof(array) } }
+#define br_from_array(array, fail_callback) \
+	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = &(NanoBufBuffer){ .start = (uint8_t*)(array), .end = (uint8_t*)(array) + sizeof(array) } })

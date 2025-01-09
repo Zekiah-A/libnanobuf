@@ -1,6 +1,7 @@
 #pragma once
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "nanobuf_defs.h"
 
