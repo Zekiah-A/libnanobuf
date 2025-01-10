@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "nanobuf.h"
 
@@ -22,4 +24,15 @@ void nb_hexdump(const void* arr, size_t n)
 		}
 		fputs(hex_pair, stdout);
 	}
+}
+
+char* nb_to_cstr(BufReaderSlice slice)
+{
+	char* c_string = (char*)malloc(slice.size + 1);
+	if (!c_string) {
+		return NULL;
+	}
+	memcpy(c_string, slice.data, slice.size);
+	c_string[slice.size] = '\0';
+	return c_string;
 }
