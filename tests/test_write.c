@@ -1,17 +1,11 @@
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #include "../nanobuf.h"
 #include "../buf_writer.h"
+#include "test_utils.h"
 
-void on_write_fail(const char* err)
-{
-	fprintf(stderr, "Failed to write data!\nBufWriter error: %s\n", err);
-	exit(EXIT_FAILURE);
-}
-
-int main(int argc, char** argv)
+int main(void)
 {
 	BufWriterCreateOptions options = {
 		.fail_cb = &on_write_fail,

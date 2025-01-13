@@ -118,22 +118,45 @@ uint64_t br_v64(BufReader* buf)
 BufReaderSlice br_str(BufReader* buf)
 {
 	if (buf->head >= buf->end) {
-		return (BufReaderSlice) {++buf->head, 0};
+		return (BufReaderSlice) { ++buf->head, 0 };
 	}
-	uint8_t n = *buf->head++;
+	uint32_t n = *buf->head++;
+	
+	// Empty string
+	if (n == 0) {
+		return (BufReaderSlice) { buf->head, 0 };
+	}
+
 	if (n >= 64) {
 		if (n < 128) {
-			n = ++buf->head > buf->end ? 0 : (n & 0x3F) << 8 | buf->head[-1];
+			// Two byte length
+			if (buf->head >= buf->end) {
+				return (BufReaderSlice) {buf->head, 0};
+			}
+			n = ((n & 0x3F) << 8) | *buf->head++;
 		}
 		else {
-			n = (buf->head += 3) > buf->end
-				? 0
-				: (n & 0x7F) << 24 | buf->head[-3] << 16 | buf->head[-2] << 8 | buf->head[-1];
+			// Four byte length
+			if (buf->head + 3 > buf->end) {
+				return (BufReaderSlice) {buf->head, 0};
+			}
+			// Read big-endian 4-byte integer
+			n = ((n & 0x7F) << 24) |
+				(buf->head[0] << 16) |
+				(buf->head[1] << 8) |
+				buf->head[2];
+			buf->head += 3;
 		}
 	}
-	uint8_t *s = buf->head;
-	buf->head = s + n;
-	return (BufReaderSlice){s, n};
+
+	// Enough bytes left to read string
+	if (buf->head + n > buf->end) {
+		return (BufReaderSlice) {buf->head, 0};
+	}
+
+	uint8_t* str = buf->head;
+	buf->head = str + n;
+	return (BufReaderSlice) {str, n};
 }
 
 BufReaderSlice br_arr(BufReader* buf, size_t n)
