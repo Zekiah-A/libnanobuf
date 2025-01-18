@@ -82,13 +82,13 @@ int main(int argc, char** argv)
 	uint8_t byte_value = br_u8(reader);
 	uint16_t u16_value = br_u16(reader);
 	uint32_t u32_value = br_u32(reader);
-	BufReaderSlice str_slice = br_str(reader);
+	char* cstr_value = br_cstr(reader);
 
 	// Print the read values
 	printf("Read byte: %u\n", byte_value);
 	printf("Read uint16_t: %u\n", u16_value);
 	printf("Read uint32_t: %u\n", u32_value);
-	printf("Read string: %.*s\n", (int)str_slice.size, (char*)str_slice.data);
+	printf("Read string: %.*s\n", cstr_value);
 
 	// Optional: You can check if the buffer was overrun
 	if (br_overran(reader)) {
