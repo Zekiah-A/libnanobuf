@@ -113,8 +113,8 @@ To build `libnanobuf`, you can follow these steps:
 1. Clone the repository or download the source files.
 
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/Zekiah-A/libnanobuf
+   cd libnanobuf
    ```
 2. Create a build directory and navigate into it:
     ```bash
