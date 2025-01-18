@@ -76,8 +76,7 @@ int main(int argc, char** argv)
 	};
 
 	// Create a BufReader from the buffer
-	BufReaderCreateOptions options = BR_OPTIONS_FROM_ARRAY(buffer, NULL);
-	BufReader* reader = br_create(options);
+	BufReader* reader = br_from_array(buffer, &on_read_fail);
 
 	// Read data from the buffer
 	uint8_t byte_value = br_u8(reader);
