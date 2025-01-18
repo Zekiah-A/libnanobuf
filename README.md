@@ -35,12 +35,12 @@ int main(int argc, char** argv)
 	uint8_t byte_value = 42;
 	uint16_t u16_value = 12345;
 	uint32_t u32_value = 987654;
-	const char* str_value = "Hello, world!";
+	const char* cstr_value = "Hello, world!";
 
 	bw_u8(writer, byte_value);
 	bw_u16(writer, u16_value);
 	bw_u32(writer, u32_value);
-	bw_str(writer, str_value); // Write the string
+	bw_cstr(writer, str_value); // Write the string
 
 	// Print the size of the written data
 	printf("Buffer size: %zu bytes\n", bw_size(writer));
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 		42,             // byte_value
 		0x30, 0x39,        // u16_value (12345)
 		0x0f, 0x3d, 0x15, 0x6e, // u32_value (987654)
-		'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 // str_value
+		'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!', 0 // cstr_value
 	};
 
 	// Create a BufReader from the buffer

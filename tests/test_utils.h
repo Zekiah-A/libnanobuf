@@ -41,7 +41,6 @@ void on_read_fail(const char* err)
 	exit(EXIT_FAILURE);
 }
 
-
 void on_write_fail(const char* err)
 {
 	fprintf(stderr, "Failed to write data!\nBufWriter error: %s\n", err);

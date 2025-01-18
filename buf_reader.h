@@ -22,11 +22,15 @@ uint8_t br_peek(const BufReader* buf, size_t n);
 uint16_t br_u16(BufReader* buf);
 // Read an unsigned 32-bit integer
 uint32_t br_u32(BufReader* buf);
+// Read an unsigned 64-bit integer
+uint64_t br_u64(BufReader* buf);
 // Read a signed 64-bit variable-length integer
 uint64_t br_v64(BufReader* buf);
-// Read a string slice
-BufReaderSlice br_str(BufReader* buf);
 // Read an array of uint8_t
-BufReaderSlice br_u8arr(BufReader* buf, size_t n);
+BufReaderSlice br_arr(BufReader* buf);
+// Read a variable length string slice
+BufReaderSlice br_str(BufReader* buf);
+// Read a null-terminated C string
+char* br_cstr(BufReader* buf);
 // Check if the buffer has been overrun
 int br_overran(const BufReader* buf);

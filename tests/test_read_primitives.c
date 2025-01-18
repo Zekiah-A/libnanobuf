@@ -5,9 +5,10 @@
 int main(void)
 {
 	uint8_t buffer[] = {
-		42,                                 // byte_value (42)
-		0x30, 0x39,                     // u16_value (12345)
-		0x00, 0x0f, 0x12, 0x06  // u32_value (987654)
+		0x2A,       // byte_value (42)
+		0x30, 0x39,                 // u16_value (12345)
+		0x00, 0x0f, 0x12, 0x06,  // u32_value (987654)
+		0x8C, 0x52, 0x3E, 0xC7, 0xDC, 0x55, 0x3A, 0x2B // u64 value (19181716151413121110)
 	};
 
 	BufReader* reader = br_from_array(buffer, &on_read_fail);

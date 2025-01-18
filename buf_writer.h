@@ -31,5 +31,7 @@ void bw_u32(BufWriter* buf, uint32_t n);
 void bw_u64(BufWriter* buf, uint64_t n);
 // Write an array of uint8_t to the buffer
 void bw_arr(BufWriter* buf, const uint8_t* arr, size_t n);
-// Write a null-terminated string to the buffer
+// Write a variable length string to the buffer
 void bw_str(BufWriter* buf, const char* str);
+// Write a null-terminated C string to the buffer
+void bw_cstr(BufWriter* buf, const char* cstr);

@@ -66,6 +66,9 @@ void bw_clear(BufWriter* buf)
 
 void bw_expand(BufWriter* buf)
 {
+	if (!buf) {
+		return;
+	}
 	size_t current_size = bw_size(buf);
 	size_t new_capacity = bw_capacity(buf) << 1;
 	uint8_t *new_start = (uint8_t*)realloc(buf->start, new_capacity);
@@ -75,6 +78,22 @@ void bw_expand(BufWriter* buf)
 	buf->start = new_start;
 	buf->head = buf->start + current_size;
 	buf->end = buf->start + new_capacity;
+}
+
+void bw_realloc(BufWriter* buf, size_t extra_space)
+{
+	if (!buf) {
+		return;
+	}
+    size_t current_size = bw_size(buf);
+    size_t new_capacity = bw_capacity(buf) * 2 + extra_space;
+    uint8_t *new_start = (uint8_t*)realloc(buf->start, new_capacity);
+    if (!new_start) {
+        buf->fail_cb("Out of memory while reallocating buffer");
+    }
+    buf->start = new_start;
+    buf->head = buf->start + current_size;
+    buf->end = buf->start + new_capacity;
 }
 
 void bw_skip(BufWriter* buf, size_t n)
@@ -103,6 +122,7 @@ void bw_u8(BufWriter* buf, uint8_t n)
 	if (buf->head == buf->end) {
 		bw_expand(buf);
 	}
+
 	*buf->head++ = n;
 }
 
@@ -111,6 +131,7 @@ void bw_u16(BufWriter* buf, uint16_t n)
 	if (buf->head >= buf->end - 1) {
 		bw_expand(buf);
 	}
+
 	*buf->head++ = n >> 8;
 	*buf->head++ = n;
 }
@@ -120,6 +141,7 @@ void bw_u32(BufWriter* buf, uint32_t n)
 	if (buf->head > buf->end - 4) {
 		bw_expand(buf);
 	}
+
 	*buf->head++ = n >> 24;
 	*buf->head++ = n >> 16;
 	*buf->head++ = n >> 8;
@@ -131,6 +153,7 @@ void bw_u64(BufWriter* buf, uint64_t n)
 	if (buf->head > buf->end - 8) {
 		bw_expand(buf);
 	}
+
 	*buf->head++ = n >> 56;
 	*buf->head++ = n >> 48;
 	*buf->head++ = n >> 40;
@@ -147,7 +170,9 @@ void bw_arr(BufWriter* buf, const uint8_t* arr, size_t n)
 		size_t current_size = bw_size(buf);
 		size_t new_capacity = bw_capacity(buf) * 2 + n;
 		uint8_t *new_start = (uint8_t*)realloc(buf->start, new_capacity);
-		if (!new_start) buf->fail_cb("Out of memory while reallocating buffer");
+		if (!new_start) {
+			buf->fail_cb("Out of memory while reallocating buffer");
+		}
 		buf->start = new_start;
 		buf->head = buf->start + current_size;
 		buf->end = buf->start + new_capacity;
@@ -175,4 +200,15 @@ void bw_str(BufWriter* buf, const char* str)
 {
 	size_t length = strlen(str);
 	bw_arr(buf, (const uint8_t*) str, length);
+}
+
+void bw_cstr(BufWriter* buf, const char* cstr)
+{
+	size_t length = strlen(cstr) + 1;
+	if (buf->head > buf->end - length) {
+		bw_realloc(buf, length);
+	}
+
+	memcpy(buf->head, cstr, length);
+	buf->head += length;
 }
