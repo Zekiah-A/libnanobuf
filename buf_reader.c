@@ -44,209 +44,214 @@ BufReader br_create(BufReaderCreateOptions options)
 	return buf;
 }
 
-size_t br_remaining(const BufReader buf)
+size_t br_remaining(const BufReader* buf)
 {
-	return (size_t)(buf.end - buf.head);
+	return (size_t)(buf->end - buf->head);
 }
 
-void br_skip(BufReader buf, size_t n)
+void br_skip(BufReader* buf, size_t n)
 {
-	buf.head += n;
+	buf->head += n;
 }
 
-uint8_t br_u8(BufReader buf)
+uint8_t br_u8(BufReader* buf)
 {
-	return ++buf.head > buf.end ? 0 : buf.head[-1];
+    if (br_remaining(buf) < 1) {
+        buf->fail_cb("Buffer overrun while reading u8");
+        return 0;
+    }
+
+    return *buf->head++;
 }
 
-uint8_t br_peek(const BufReader buf, size_t n)
+uint8_t br_peek(const BufReader* buf, size_t n)
 {
-	return buf.head >= buf.end - n ? 0 : buf.head[n];
+	return buf->head >= buf->end - n ? 0 : buf->head[n];
 }
 
-uint16_t br_u16(BufReader buf)
+uint16_t br_u16(BufReader* buf)
 {
-	if (buf.head + 2 > buf.end) {
-		buf.fail_cb("Buffer overrun while reading u16");
+    if (br_remaining(buf) < 2) {
+        buf->fail_cb("Buffer overrun while reading u16");
+        return 0;
+    }
+
+    uint16_t result = (buf->head[0] << 8) | buf->head[1];
+    buf->head += 2;
+    return result;
+}
+
+uint32_t br_u32(BufReader* buf)
+{
+    if (br_remaining(buf) < 4) {
+		buf->fail_cb("Buffer overrun while reading u32");
 		return 0;
 	}
 
-	uint16_t result = (buf.head[0] << 8) | buf.head[1];
-	buf.head += 2;
+	uint32_t result = (buf->head[0] << 24) |
+		(buf->head[1] << 16) |
+		(buf->head[2] << 8) |
+		buf->head[3];
+	buf->head += 4;
 	return result;
 }
 
-uint32_t br_u32(BufReader buf)
+uint64_t br_u64(BufReader* buf)
 {
-	if (buf.head + 4 > buf.end) {
-		buf.fail_cb("Buffer overrun while reading u32");
+    if (br_remaining(buf) < 8) {
+		buf->fail_cb("Buffer overrun while reading u64");
 		return 0;
 	}
 
-	uint32_t result = (buf.head[0] << 24) |
-		(buf.head[1] << 16) |
-		(buf.head[2] << 8) |
-		buf.head[3];
-	buf.head += 4;
+    uint64_t result = ((uint64_t)buf->head[0] << 56) |
+		((uint64_t)buf->head[1] << 48) |
+		((uint64_t)buf->head[2] << 40) |
+		((uint64_t)buf->head[3] << 32) |
+		((uint64_t)buf->head[4] << 24) |
+		((uint64_t)buf->head[5] << 16) |
+		((uint64_t)buf->head[6] << 8) |
+		(uint64_t)buf->head[7];
+	buf->head += 8;
 	return result;
 }
 
-uint64_t br_u64(BufReader buf)
+uint64_t br_v64(BufReader* buf)
 {
-	if (buf.head + 8 > buf.end) {
-		buf.fail_cb("Buffer overrun while reading u64");
-		return 0;
+	if (buf->head >= buf->end) {
+		return (buf->head++, 0);
 	}
-
-    uint64_t result = ((uint64_t)buf.head[0] << 56) |
-		((uint64_t)buf.head[1] << 48) |
-		((uint64_t)buf.head[2] << 40) |
-		((uint64_t)buf.head[3] << 32) |
-		((uint64_t)buf.head[4] << 24) |
-		((uint64_t)buf.head[5] << 16) |
-		((uint64_t)buf.head[6] << 8) |
-		(uint64_t)buf.head[7];
-	buf.head += 8;
-	return result;
-}
-
-uint64_t br_v64(BufReader buf)
-{
-	if (buf.head >= buf.end) {
-		return (buf.head++, 0);
-	}
-	uint64_t n = *buf.head++;
+	uint64_t n = *buf->head++;
 	if (n < 64) {
 		return n;
 	}
 	else if (n < 96) {
-		return ++buf.head > buf.end ? 0 : (n & 0x1F) << 8 | buf.head[-1];
+		return ++buf->head > buf->end ? 0 : (n & 0x1F) << 8 | buf->head[-1];
 	}
 	else if (n < 128) {
-		return (buf.head += 3) > buf.end
+		return (buf->head += 3) > buf->end
 			? 0
-			: (n & 0x1F) << 24 | buf.head[-3] << 16 | buf.head[-2] << 8 | buf.head[-1];
+			: (n & 0x1F) << 24 | buf->head[-3] << 16 | buf->head[-2] << 8 | buf->head[-1];
 	}
 	else {
-		return (buf.head += 7) > buf.end
+		return (buf->head += 7) > buf->end
 			? 0
-			: (n & 0x7F) << 56 | (uint64_t)buf.head[-7] << 48 |
-				(uint64_t)buf.head[-6] << 40 | (uint64_t)buf.head[-5] << 32 |
-				buf.head[-4] << 24 | buf.head[-3] << 16 | buf.head[-2] << 8 | buf.head[-1];
+			: (n & 0x7F) << 56 | (uint64_t)buf->head[-7] << 48 |
+				(uint64_t)buf->head[-6] << 40 | (uint64_t)buf->head[-5] << 32 |
+				buf->head[-4] << 24 | buf->head[-3] << 16 | buf->head[-2] << 8 | buf->head[-1];
 	}
 }
 
-BufReaderSlice br_arr(BufReader buf)
+BufReaderSlice br_arr(BufReader* buf)
 {
-	if (buf.head >= buf.end) {
-		buf.fail_cb("Buffer overrun while reading array");
+	if (buf->head >= buf->end) {
+		buf->fail_cb("Buffer overrun while reading array");
 		return (BufReaderSlice){NULL, 0};
 	}
 
 	// Read the array size
-	uint32_t n = *buf.head++;
+	uint32_t n = *buf->head++;
 	if (n >= 64) {
 		if (n < 128) {
-			if (buf.head >= buf.end) {
-				buf.fail_cb("Buffer overrun while reading 2-byte array size");
+			if (buf->head >= buf->end) {
+				buf->fail_cb("Buffer overrun while reading 2-byte array size");
 				return (BufReaderSlice){NULL, 0};
 			}
-			n = ((n & 0x3F) << 8) | *buf.head++;
+			n = ((n & 0x3F) << 8) | *buf->head++;
 		} else {
-			if (buf.head + 3 > buf.end) {
-				buf.fail_cb("Buffer overrun while reading 4-byte array size");
+			if (buf->head + 3 > buf->end) {
+				buf->fail_cb("Buffer overrun while reading 4-byte array size");
 				return (BufReaderSlice){NULL, 0};
 			}
 			n = ((n & 0x7F) << 24) |
-				(buf.head[0] << 16) |
-				(buf.head[1] << 8) |
-				buf.head[2];
-			buf.head += 3;
+				(buf->head[0] << 16) |
+				(buf->head[1] << 8) |
+				buf->head[2];
+			buf->head += 3;
 		}
 	}
 
 	// Check if the array size overrun
-	if (buf.head + n > buf.end) {
-		buf.fail_cb("Buffer overrun while reading array data");
+	if (buf->head + n > buf->end) {
+		buf->fail_cb("Buffer overrun while reading array data");
 		return (BufReaderSlice){NULL, 0};
 	}
 
 	// Create a slice for the array
-	uint8_t* start = buf.head;
-	buf.head += n;
+	uint8_t* start = buf->head;
+	buf->head += n;
 
 	return (BufReaderSlice){ start, n };
 }
 
 
-BufReaderSlice br_str(BufReader buf)
+BufReaderSlice br_str(BufReader* buf)
 {
-	if (buf.head >= buf.end) {
-		return (BufReaderSlice) { ++buf.head, 0 };
+	if (buf->head >= buf->end) {
+		return (BufReaderSlice) { ++buf->head, 0 };
 	}
-	uint32_t n = *buf.head++;
+	uint32_t n = *buf->head++;
 	
 	// Empty string
 	if (n == 0) {
-		return (BufReaderSlice) { buf.head, 0 };
+		return (BufReaderSlice) { buf->head, 0 };
 	}
 
 	if (n >= 64) {
 		if (n < 128) {
 			// Two byte length
-			if (buf.head >= buf.end) {
-				return (BufReaderSlice) {buf.head, 0};
+			if (buf->head >= buf->end) {
+				return (BufReaderSlice) {buf->head, 0};
 			}
-			n = ((n & 0x3F) << 8) | *buf.head++;
+			n = ((n & 0x3F) << 8) | *buf->head++;
 		}
 		else {
 			// Four byte length
-			if (buf.head + 3 > buf.end) {
-				return (BufReaderSlice) {buf.head, 0};
+			if (buf->head + 3 > buf->end) {
+				return (BufReaderSlice) {buf->head, 0};
 			}
 			// Read big-endian 4-byte integer
 			n = ((n & 0x7F) << 24) |
-				(buf.head[0] << 16) |
-				(buf.head[1] << 8) |
-				buf.head[2];
-			buf.head += 3;
+				(buf->head[0] << 16) |
+				(buf->head[1] << 8) |
+				buf->head[2];
+			buf->head += 3;
 		}
 	}
 
 	// Enough bytes left to read string
-	if (buf.head + n > buf.end) {
-		return (BufReaderSlice) {buf.head, 0};
+	if (buf->head + n > buf->end) {
+		return (BufReaderSlice) {buf->head, 0};
 	}
 
-	uint8_t* str = buf.head;
-	buf.head = str + n;
+	uint8_t* str = buf->head;
+	buf->head = str + n;
 	return (BufReaderSlice) {str, n};
 }
 
-char* br_cstr(BufReader buf)
+char* br_cstr(BufReader* buf)
 {
-	if (buf.head >= buf.end) {
-		buf.fail_cb("Buffer overrun while reading C string");
+	if (buf->head >= buf->end) {
+		buf->fail_cb("Buffer overrun while reading C string");
 		return NULL;
 	}
 
-	uint8_t* start = buf.head;
-	while (buf.head < buf.end && *buf.head != '\0') {
-		buf.head++;
+	uint8_t* start = buf->head;
+	while (buf->head < buf->end && *buf->head != '\0') {
+		buf->head++;
 	}
 
-	if (buf.head == buf.end) {
-		buf.fail_cb("Null terminator not found in buffer");
+	if (buf->head == buf->end) {
+		buf->fail_cb("Null terminator not found in buffer");
 		return NULL;
 	}
 
 	// Move past null terminator
-	buf.head++;
+	buf->head++;
 
 	return strdup((char*) start);
 }
 
-int br_overran(const BufReader buf)
+int br_overran(const BufReader* buf)
 {
-	return buf.head > buf.end;
+	return buf->head > buf->end;
 }

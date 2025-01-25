@@ -13,8 +13,8 @@ int main(void)
 	const char* expected_str = "hello";
 
 	BufReader reader = br_from_array(buffer, &on_read_fail);
-	char* cstr = br_cstr(reader);
-	ASSERT(!br_overran(reader), "BufReader overrun");
+	char* cstr = br_cstr(&reader);
+	ASSERT(!br_overran(&reader), "BufReader overrun");
 
 	ASSERT(cstr != NULL, "Cstring was null");
 	ASSERT_EQ(expected_len, strlen(cstr), "Length match in cstring");

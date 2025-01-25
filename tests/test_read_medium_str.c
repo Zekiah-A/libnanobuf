@@ -19,8 +19,8 @@ int main(void)
 	expected_str[100] = '\0';
 
 	BufReader reader = br_from_array(buffer, &on_read_fail);
-	BufReaderSlice str_slice = br_str(reader);
-	ASSERT(!br_overran(reader), "BufReader overrun");
+	BufReaderSlice str_slice = br_str(&reader);
+	ASSERT(!br_overran(&reader), "BufReader overrun");
 
 	char* cstring = nb_to_cstr(str_slice);
 	ASSERT(cstring != NULL, "Cstring was null");
