@@ -5,12 +5,14 @@
 
 #include "nanobuf_defs.h"
 
-// Default buffer writer fail function
+// Default buf writer fail function
 void bw_fail(const char* msg);
-// Create a new buffer writer
-BufWriter* bw_create(BufWriterCreateOptions options);
-// Destroy a buffer writer (set free_buffer to true to free underlying buffer)
-void bw_destroy(BufWriter* buf, bool free_buffer);
+// Create a new buf writer
+BufWriter bw_create(BufWriterCreateOptions options);
+// Destroy the underlying buffer of a buf writer
+void bw_dispose(BufWriter* buf);
+// Destroy a heap alllocated buf writer (including the underlying buffer)
+void bw_free(BufWriter** buf);
 // Get the current size of data written in the buffer
 size_t bw_size(const BufWriter* buf);
 // Get the total capacity of the buffer

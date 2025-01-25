@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 		.fail_cb = &on_write_fail,   // A fail callback function (set to NULL for default)
 		.intial_size = 1024   // Initial buffer size (bytes)
 	};
-	BufWriter* writer = bw_create(options);
+	bw_heapfree(writer) = bw_malloc(bw_create(options));
 
 	// Write various types of data to the buffer
 	uint8_t byte_value = 42;
@@ -46,8 +46,7 @@ int main(int argc, char** argv)
 	printf("Buffer size: %zu bytes\n", bw_size(writer));
 	nb_hexdump(writer->start, bw_size(writer));
 
-	// Optional: You can destroy the writer when done
-	bw_destroy(writer, true);
+	// The buffer will be automatically freed upon leaving scope
 	return 0;
 }
 ```
@@ -76,13 +75,13 @@ int main(int argc, char** argv)
 	};
 
 	// Create a BufReader from the buffer
-	BufReader* reader = br_from_array(buffer, &on_read_fail);
+	BufReader reader = br_from_array(buffer, &on_read_fail);
 
 	// Read data from the buffer
-	uint8_t byte_value = br_u8(reader);
-	uint16_t u16_value = br_u16(reader);
-	uint32_t u32_value = br_u32(reader);
-	char* cstr_value = br_cstr(reader);
+	uint8_t byte_value = br_u8(&reader);
+	uint16_t u16_value = br_u16(&reader);
+	uint32_t u32_value = br_u32(&reader);
+	char* cstr_value = br_cstr(&reader);
 
 	// Print the read values
 	printf("Read byte: %u\n", byte_value);
@@ -91,7 +90,7 @@ int main(int argc, char** argv)
 	printf("Read string: %.*s\n", cstr_value);
 
 	// Optional: You can check if the buffer was overrun
-	if (br_overran(reader)) {
+	if (br_overran(&reader)) {
 		printf("Buffer overrun detected!\n");
 	}
 

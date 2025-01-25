@@ -12,33 +12,36 @@ void bw_fail(const char* msg)
 	exit(EXIT_FAILURE);
 }
 
-BufWriter* bw_create(BufWriterCreateOptions options)
+BufWriter bw_create(BufWriterCreateOptions options)
 {
 	BufWriterFailCallback fail_cb = options.fail_cb ? options.fail_cb : &bw_fail;
-	BufWriter* buf = (BufWriter*) malloc(sizeof(BufWriter));
-	if (buf == NULL) {
-		fail_cb("Failed to allocate memory for buffer");
-	}
-	buf->fail_cb = fail_cb;
+	BufWriter buf = { 0 };
+	buf.fail_cb = fail_cb;
 
 	size_t malloc_size = options.intial_size >= 0 ? 16 : options.intial_size;
-	buf->start = buf->head = (uint8_t*) malloc(malloc_size);
-	if (!buf->start) {
-		buf->fail_cb("Failed to allocate initial buffer memory");
+	buf.start = buf.head = (uint8_t*) malloc(malloc_size);
+	if (!buf.start) {
+		buf.fail_cb("Failed to allocate initial buffer memory");
 	}
-	buf->end = buf->start + malloc_size;
+	buf.end = buf.start + malloc_size;
 	return buf;
 }
 
-void bw_destroy(BufWriter* buf, bool free_buffer)
+void bw_dispose(BufWriter* buf)
 {
-	if (!buf) {
-		return;
+	if (buf) {
+		free(buf->start);	
 	}
-	if (free_buffer) {
-		free(buf->start);
+}
+
+void bw_free(BufWriter** buf)
+{
+	if (buf) {
+		bw_dispose(*buf);
+		if (*buf) {
+			free(*buf);
+		}
 	}
-	free(buf);
 }
 
 size_t bw_size(const BufWriter* buf)
@@ -53,9 +56,6 @@ size_t bw_capacity(const BufWriter* buf)
 
 void bw_clear(BufWriter* buf)
 {
-	if (!buf) {
-		return;
-	}
 	free(buf->start);
 	buf->start = buf->head = (uint8_t*)malloc(16);
 	if (!buf->start) {
@@ -66,9 +66,6 @@ void bw_clear(BufWriter* buf)
 
 void bw_expand(BufWriter* buf)
 {
-	if (!buf) {
-		return;
-	}
 	size_t current_size = bw_size(buf);
 	size_t new_capacity = bw_capacity(buf) << 1;
 	uint8_t *new_start = (uint8_t*)realloc(buf->start, new_capacity);
@@ -82,9 +79,6 @@ void bw_expand(BufWriter* buf)
 
 void bw_realloc(BufWriter* buf, size_t extra_space)
 {
-	if (!buf) {
-		return;
-	}
     size_t current_size = bw_size(buf);
     size_t new_capacity = bw_capacity(buf) * 2 + extra_space;
     uint8_t *new_start = (uint8_t*)realloc(buf->start, new_capacity);
@@ -98,9 +92,6 @@ void bw_realloc(BufWriter* buf, size_t extra_space)
 
 void bw_skip(BufWriter* buf, size_t n)
 {
-	if (!buf) {
-		return;
-	}
 	if (buf->head > buf->end - n) {
 		size_t current_size = bw_size(buf);
 		size_t new_capacity = bw_capacity(buf) * 2 + n;
@@ -117,7 +108,7 @@ void bw_skip(BufWriter* buf, size_t n)
 	}
 }
 
-void bw_u8(BufWriter* buf, uint8_t n)
+void bw_u8(BufWriter *buf, uint8_t n)
 {
 	if (buf->head == buf->end) {
 		bw_expand(buf);

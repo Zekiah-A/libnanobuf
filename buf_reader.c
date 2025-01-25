@@ -13,49 +13,35 @@ void br_fail(const char* msg)
 	exit(EXIT_FAILURE);
 }
 
-BufReader* br_create(BufReaderCreateOptions options)
+BufReader br_create(BufReaderCreateOptions options)
 {
 	BufReaderFailCallback fail_cb = options.fail_cb ? options.fail_cb : &br_fail;
 
-	BufReader* buf = (BufReader*) malloc(sizeof(BufReader));
-	if (buf == NULL) {
-		fail_cb("Failed to allocate memory for buffer");	
-		return NULL;	
-	}
-	buf->fail_cb = fail_cb;
+	BufReader buf = { 0 };
+	buf.fail_cb = fail_cb;
 
 	switch (options.source_type) {
 		case BR_SOURCE_BUF_WRITER: {
-			buf->head = options.buf_writer->head;
-			buf->end = options.buf_writer->end;
+			buf.head = options.buf_writer.head;
+			buf.end = options.buf_writer.end;
 			break;
 		}
 		case BR_SOURCE_SLICE: {
-			buf->head = options.slice->data;
-			buf->end = (uint8_t*)options.slice->data + options.slice->size;
+			buf.head = options.slice->data;
+			buf.end = (uint8_t*)options.slice->data + options.slice->size;
 			break;
 		}
 		case BR_SOURCE_BUFFER: {
-			buf->head = options.buffer->start;
-			buf->end = options.buffer->end;
+			buf.head = options.buffer->start;
+			buf.end = options.buffer->end;
 			break;
 		}
 		default: {
 			fail_cb("Unrecognised buffer source type");
-			return NULL;
 			break;
 		}
 	}
 	return buf;
-}
-
-void br_destroy(BufReader* buf)
-{
-	if (!buf) {
-		return;
-	}
-
-	free(buf);
 }
 
 size_t br_remaining(const BufReader* buf)
@@ -70,7 +56,12 @@ void br_skip(BufReader* buf, size_t n)
 
 uint8_t br_u8(BufReader* buf)
 {
-	return ++buf->head > buf->end ? 0 : buf->head[-1];
+    if (br_remaining(buf) < 1) {
+        buf->fail_cb("Buffer overrun while reading u8");
+        return 0;
+    }
+
+    return *buf->head++;
 }
 
 uint8_t br_peek(const BufReader* buf, size_t n)
@@ -80,19 +71,19 @@ uint8_t br_peek(const BufReader* buf, size_t n)
 
 uint16_t br_u16(BufReader* buf)
 {
-	if (buf->head + 2 > buf->end) {
-		buf->fail_cb("Buffer overrun while reading u16");
-		return 0;
-	}
+    if (br_remaining(buf) < 2) {
+        buf->fail_cb("Buffer overrun while reading u16");
+        return 0;
+    }
 
-	uint16_t result = (buf->head[0] << 8) | buf->head[1];
-	buf->head += 2;
-	return result;
+    uint16_t result = (buf->head[0] << 8) | buf->head[1];
+    buf->head += 2;
+    return result;
 }
 
 uint32_t br_u32(BufReader* buf)
 {
-	if (buf->head + 4 > buf->end) {
+    if (br_remaining(buf) < 4) {
 		buf->fail_cb("Buffer overrun while reading u32");
 		return 0;
 	}
@@ -107,7 +98,7 @@ uint32_t br_u32(BufReader* buf)
 
 uint64_t br_u64(BufReader* buf)
 {
-	if (buf->head + 8 > buf->end) {
+    if (br_remaining(buf) < 8) {
 		buf->fail_cb("Buffer overrun while reading u64");
 		return 0;
 	}

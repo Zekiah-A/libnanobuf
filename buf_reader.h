@@ -7,9 +7,7 @@
 // Default buf reader fail function
 void br_fail(const char* msg);
 // Initialise a buffer reader
-BufReader* br_create(BufReaderCreateOptions options);
-// Destroy a buffer writer (will not free underlying buffer)
-void br_destroy(BufReader* buf);
+BufReader br_create(BufReaderCreateOptions options);
 // Return remaining bytes in the buffer
 size_t br_remaining(const BufReader* buf);
 // Skip a number of bytes in the buffer
