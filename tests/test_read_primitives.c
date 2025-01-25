@@ -11,7 +11,7 @@ int main(void)
 		0x8C, 0x52, 0x3E, 0xC7, 0xDC, 0x55, 0x3A, 0x2B // u64 value (19181716151413121110)
 	};
 
-	BufReader* reader = br_from_array(buffer, &on_read_fail);
+	BufReader reader = br_from_array(buffer, &on_read_fail);
 	
 	uint8_t byte_value = br_u8(reader);
 	ASSERT(!br_overran(reader), "BufReader overrun");
@@ -25,6 +25,5 @@ int main(void)
 	ASSERT(!br_overran(reader), "BufReader overrun");
 	ASSERT_EQ(987654, u32_value, "u32_value");
 
-	br_destroy(reader);
 	return EXIT_SUCCESS;
 }

@@ -12,7 +12,7 @@ int main(void)
 	const size_t expected_len = 5;
 	const char* expected_str = "hello";
 
-	BufReader* reader = br_from_array(buffer, &on_read_fail);
+	BufReader reader = br_from_array(buffer, &on_read_fail);
 	char* cstr = br_cstr(reader);
 	ASSERT(!br_overran(reader), "BufReader overrun");
 
@@ -20,7 +20,6 @@ int main(void)
 	ASSERT_EQ(expected_len, strlen(cstr), "Length match in cstring");
 	ASSERT_MEM_EQ(expected_str, cstr, expected_len, "String content doesn't match");
 
-	br_destroy(reader);
 	free(cstr);
 	return EXIT_SUCCESS;
 }

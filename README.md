@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 		.fail_cb = &on_write_fail,   // A fail callback function (set to NULL for default)
 		.intial_size = 1024   // Initial buffer size (bytes)
 	};
-	BufWriter* writer = bw_create(options);
+	BufWriter* writer = bw_malloc(bw_create(options));
 
 	// Write various types of data to the buffer
 	uint8_t byte_value = 42;
@@ -46,8 +46,8 @@ int main(int argc, char** argv)
 	printf("Buffer size: %zu bytes\n", bw_size(writer));
 	nb_hexdump(writer->start, bw_size(writer));
 
-	// Optional: You can destroy the writer when done
-	bw_destroy(writer, true);
+	// Optional: You can destroy the undelying buffer of the writer when done
+	bw_destroy(writer);
 	return 0;
 }
 ```

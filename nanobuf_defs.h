@@ -17,7 +17,8 @@ typedef struct bw_buffer {
 	uint8_t* start;
 	uint8_t* end;
 	uint8_t* head;
-} BufWriter;
+};
+typedef struct bw_buffer BufWriter;
 
 typedef struct bw_create_options {
 	BufWriterFailCallback fail_cb;
@@ -35,7 +36,8 @@ typedef struct br_buffer {
 	BufReaderFailCallback fail_cb;
 	uint8_t* head;
 	uint8_t* end;
-} BufReader;
+};
+typedef struct br_buffer BufReader;
 
 typedef struct br_slice {
 	void* data;
@@ -52,7 +54,7 @@ typedef struct br_create_options {
 	BufReaderFailCallback fail_cb;
 	BufReaderSourceType source_type;
 	union {
-		const BufWriter* buf_writer;
+		const BufWriter buf_writer;
 		const BufReaderSlice* slice;
 		const NanoBufBuffer* buffer;
 	};
@@ -72,3 +74,18 @@ typedef struct br_create_options {
 
 #define br_from_array(array, fail_callback) \
 	br_create((BufReaderCreateOptions) { .fail_cb = (fail_callback), .source_type = BR_SOURCE_BUFFER, .buffer = &(NanoBufBuffer){ .start = (uint8_t*)(array), .end = (uint8_t*)(array) + sizeof(array) } })
+
+#define bw_stackfree(writer) \
+	__attribute__((cleanup(bw_dispose))) BufWriter writer
+
+#define bw_heapfree(writer) \
+	__attribute__((cleanup(bw_free))) BufWriter* writer
+
+#define bw_malloc(buf) \
+({ \
+	BufWriter *bw = (BufWriter *)malloc(sizeof(BufWriter)); \
+	if (bw != NULL) { \
+		*bw = buf; \
+	} \
+	bw; \
+})

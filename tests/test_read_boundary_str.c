@@ -16,7 +16,7 @@ int main(void)
 	memset(expected_str, 'x', 63);
 	expected_str[63] = '\0';
 
-	BufReader* reader = br_from_array(buffer, &on_read_fail);
+	BufReader reader = br_from_array(buffer, &on_read_fail);
 	BufReaderSlice str_slice = br_str(reader);
 	ASSERT(!br_overran(reader), "BufReader overrun");
 
@@ -25,6 +25,5 @@ int main(void)
 	ASSERT_EQ(expected_len, strlen(cstring), "Length match in cstring");
 	ASSERT_MEM_EQ(expected_str, cstring, expected_len, "String content doesn't match");
 
-	br_destroy(reader);
 	return EXIT_SUCCESS;
 }
